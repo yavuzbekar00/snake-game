@@ -15,6 +15,19 @@ const GameBoard = () => {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [speed, setSpeed] = useState(200);
+  const [obstacles, setObstacles] = useState([
+    { x: 5, y: 5 },
+    { x: 15, y: 15 },
+    { x: 20, y: 10 },
+  ]);
+
+  const generateRandomObstacles = () => {
+    const newObstacles = Array.from({ length: 3 }, () => ({
+      x: Math.floor(Math.random() * 25),
+      y: Math.floor(Math.random() * 25),
+    }));
+    setObstacles(newObstacles);
+  };
 
   const resetGame = () => {
     setSnake([
@@ -30,6 +43,7 @@ const GameBoard = () => {
     setGameOver(false);
     setScore(0);
     setSpeed(200);
+    generateRandomObstacles();
   };
 
   useEffect(() => {
@@ -63,6 +77,7 @@ const GameBoard = () => {
         const head = newSnake[0];
         let newHead;
 
+        // Hareket yönü kontrolü
         switch (direction) {
           case "UP":
             newHead = { x: head.x, y: head.y - 1 };
@@ -80,6 +95,7 @@ const GameBoard = () => {
             newHead = head;
         }
 
+        // Çarpma Kontrolü
         if (
           newHead.x < 0 ||
           newHead.x >= 25 ||
@@ -87,6 +103,9 @@ const GameBoard = () => {
           newHead.y >= 25 ||
           newSnake.some(
             (segment) => segment.x === newHead.x && segment.y === newHead.y
+          ) ||
+          obstacles.some(
+            (obstacle) => obstacle.x === newHead.x && obstacle.y === newHead.y
           )
         ) {
           setGameOver(true);
@@ -95,6 +114,7 @@ const GameBoard = () => {
 
         newSnake.unshift(newHead);
 
+        // Yiyecek yendiğinde
         if (newHead.x === food.x && newHead.y === food.y) {
           setFood({
             x: Math.floor(Math.random() * 25),
@@ -102,6 +122,7 @@ const GameBoard = () => {
           });
           setScore(score + 1);
           setSpeed((speed) => (speed > 50 ? speed - 10 : speed));
+          generateRandomObstacles(); // Yiyecek yendiğinde engellerin yerini değiştir
         } else {
           newSnake.pop();
         }
@@ -114,7 +135,7 @@ const GameBoard = () => {
       const interval = setInterval(moveSnake, speed);
       return () => clearInterval(interval);
     }
-  }, [direction, food, gameOver, score, speed]);
+  }, [direction, food, gameOver, score, speed, obstacles]);
 
   return (
     <div className="container">
@@ -138,6 +159,16 @@ const GameBoard = () => {
           className="food"
           style={{ top: `${food.y * 20}px`, left: `${food.x * 20}px` }}
         ></div>
+        {obstacles.map((obstacle, index) => (
+          <div
+            key={index}
+            className="obstacle"
+            style={{
+              top: `${obstacle.y * 20}px`,
+              left: `${obstacle.x * 20}px`,
+            }}
+          ></div>
+        ))}
       </div>
     </div>
   );
